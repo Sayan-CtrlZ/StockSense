@@ -1713,6 +1713,7 @@ a {
 
 .text-danger { color: var(--rose) !important; }
 .text-primary { color: var(--primary) !important; }
+.text-main { color: var(--text-main) !important; }
 .text-secondary { color: var(--text-secondary) !important; }
 .text-muted { color: var(--text-muted) !important; }
 .text-emerald { color: var(--emerald) !important; }
@@ -1730,6 +1731,7 @@ a {
 .font-semibold { font-weight: 600; }
 .font-medium { font-weight: 500; }
 .font-mono { font-family: var(--font-mono); }
+.tracking-widest { letter-spacing: 0.25em; }
 
 .text-xs { font-size: 12px; }
 .text-sm { font-size: 13px; }

@@ -146,7 +146,7 @@ export default function StockView() {
                       </span>
                     </td>
                     <td>
-                      <span className="font-mono font-bold text-slate-100">
+                      <span className="font-mono font-bold text-main">
                         {item.onHand} {item.uom}
                       </span>
                     </td>
