@@ -180,57 +180,59 @@ export default function Navbar({ user, onLogout }) {
           <span>Move History</span>
         </button>
 
-        {/* 5. Settings Dropdown */}
-        <div className="nav-dropdown" ref={settingsRef}>
-          <button
-            id="nav-link-settings"
-            className={`nav-item ${isSettingsActive ? 'active' : ''}`}
-            onClick={() => {
-              setSettingsOpen(!settingsOpen);
-              setOpsOpen(false);
-              setProfileOpen(false);
-            }}
-          >
-            <SettingsIcon size={17} />
-            <span>Settings</span>
-            <ChevronDown size={14} className={`chevron ${settingsOpen ? 'open' : ''}`} />
-          </button>
+        {/* 5. Settings Dropdown (Only for Inventory Manager) */}
+        {user?.role === 'inventory_manager' && (
+          <div className="nav-dropdown" ref={settingsRef}>
+            <button
+              id="nav-link-settings"
+              className={`nav-item ${isSettingsActive ? 'active' : ''}`}
+              onClick={() => {
+                setSettingsOpen(!settingsOpen);
+                setOpsOpen(false);
+                setProfileOpen(false);
+              }}
+            >
+              <SettingsIcon size={17} />
+              <span>Settings</span>
+              <ChevronDown size={14} className={`chevron ${settingsOpen ? 'open' : ''}`} />
+            </button>
 
-          {settingsOpen && (
-            <div className="dropdown-menu" id="settings-dropdown-menu">
-              <div className="dropdown-header">Warehouse Management</div>
-              <button
-                id="submenu-warehouses"
-                className={`dropdown-item ${location.pathname === '/settings/warehouses' ? 'active' : ''}`}
-                onClick={() => {
-                  navigate('/settings/warehouses');
-                  setSettingsOpen(false);
-                }}
-              >
-                <Warehouse size={16} className="text-cyan" />
-                <div>
-                  <span className="item-title">1. Warehouses</span>
-                  <small>Facilities, codes & addresses</small>
-                </div>
-              </button>
+            {settingsOpen && (
+              <div className="dropdown-menu" id="settings-dropdown-menu">
+                <div className="dropdown-header">Warehouse Management</div>
+                <button
+                  id="submenu-warehouses"
+                  className={`dropdown-item ${location.pathname === '/settings/warehouses' ? 'active' : ''}`}
+                  onClick={() => {
+                    navigate('/settings/warehouses');
+                    setSettingsOpen(false);
+                  }}
+                >
+                  <Warehouse size={16} className="text-cyan" />
+                  <div>
+                    <span className="item-title">1. Warehouses</span>
+                    <small>Facilities, codes & addresses</small>
+                  </div>
+                </button>
 
-              <button
-                id="submenu-locations"
-                className={`dropdown-item ${location.pathname === '/settings/locations' ? 'active' : ''}`}
-                onClick={() => {
-                  navigate('/settings/locations');
-                  setSettingsOpen(false);
-                }}
-              >
-                <MapPin size={16} className="text-purple" />
-                <div>
-                  <span className="item-title">2. Locations</span>
-                  <small>Docks, racks, shelves & staging</small>
-                </div>
-              </button>
-            </div>
-          )}
-        </div>
+                <button
+                  id="submenu-locations"
+                  className={`dropdown-item ${location.pathname === '/settings/locations' ? 'active' : ''}`}
+                  onClick={() => {
+                    navigate('/settings/locations');
+                    setSettingsOpen(false);
+                  }}
+                >
+                  <MapPin size={16} className="text-purple" />
+                  <div>
+                    <span className="item-title">2. Locations</span>
+                    <small>Docks, racks, shelves & staging</small>
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </nav>
 
       {/* User Badge [A] matching Wireframe */}

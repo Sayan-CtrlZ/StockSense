@@ -73,15 +73,21 @@ export default function App() {
       {/* Main View Area */}
       <main className="main-content-viewport" id="main-content-viewport">
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={<Dashboard user={user} />} />
           <Route path="/operations/receipts" element={<Receipts />} />
           <Route path="/operations/deliveries" element={<Deliveries />} />
           <Route path="/operations/adjustments" element={<Adjustments />} />
           <Route path="/operations/transfers" element={<Transfers />} />
           <Route path="/stock" element={<StockView />} />
           <Route path="/move-history" element={<MoveHistory />} />
-          <Route path="/settings/warehouses" element={<Warehouses />} />
-          <Route path="/settings/locations" element={<Locations />} />
+          <Route
+            path="/settings/warehouses"
+            element={user?.role === 'inventory_manager' ? <Warehouses /> : <Navigate to="/" replace />}
+          />
+          <Route
+            path="/settings/locations"
+            element={user?.role === 'inventory_manager' ? <Locations /> : <Navigate to="/" replace />}
+          />
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
