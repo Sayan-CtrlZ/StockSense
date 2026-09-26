@@ -28,14 +28,17 @@ export default function MoveHistory() {
       if (search.trim()) params.search = search.trim();
 
       const res = await api.get('/ledger', { params });
-      const unwrapped = unwrap(res);
+      const raw = res.data;
+      const list = Array.isArray(raw?.data)
+        ? raw.data
+        : Array.isArray(raw)
+        ? raw
+        : Array.isArray(unwrap(res))
+        ? unwrap(res)
+        : [];
 
-      if (view === 'kanban') {
-        setKanbanData(unwrapped);
-        setMoves(unwrapped.data || []);
-      } else {
-        setMoves(unwrapped || []);
-      }
+      setMoves(list);
+      setKanbanData(raw);
     } catch (err) {
       setError(apiError(err));
     } finally {
@@ -128,20 +131,21 @@ export default function MoveHistory() {
                   </tr>
                 ) : moves.length > 0 ? (
                   moves.map((m) => {
-                    const isPositive = m.quantityDelta > 0;
-                    const isZero = m.quantityDelta === 0;
+                    const delta = m.quantityDelta !== undefined ? m.quantityDelta : (m.direction === 'OUT' ? -m.quantity : m.quantity);
+                    const isPositive = delta > 0;
+                    const isZero = delta === 0;
                     return (
-                      <tr key={m._id} id={`move-row-${m._id}`}>
+                      <tr key={m._id || m.id} id={`move-row-${m._id || m.id}`}>
                         <td>
                           <span className="text-xs text-muted">
-                            {m.timestamp ? new Date(m.timestamp).toLocaleString() : '—'}
+                            {m.date || (m.timestamp ? new Date(m.timestamp).toLocaleString() : '—')}
                           </span>
                         </td>
                         <td>
-                          <b className="font-mono text-cyan">{m.referenceNumber}</b>
+                          <b className="font-mono text-cyan">{m.referenceNumber || m.reference}</b>
                         </td>
                         <td>
-                          <b>{m.productName}</b>
+                          <b>{m.productName || m.product}</b>
                           <code className="text-xs text-muted block">{m.sku}</code>
                         </td>
                         <td>
@@ -149,12 +153,12 @@ export default function MoveHistory() {
                         </td>
                         <td>
                           <span className="text-muted text-xs">
-                            {m.sourceWarehouse} / {m.sourceLocation}
+                            {m.sourceWarehouse && m.sourceLocation ? `${m.sourceWarehouse} / ${m.sourceLocation}` : (m.from || '—')}
                           </span>
                         </td>
                         <td>
                           <span className="text-muted text-xs">
-                            {m.destinationWarehouse} / {m.destinationLocation}
+                            {m.destinationWarehouse && m.destinationLocation ? `${m.destinationWarehouse} / ${m.destinationLocation}` : (m.to || '—')}
                           </span>
                         </td>
                         <td>
@@ -168,7 +172,7 @@ export default function MoveHistory() {
                             }`}
                           >
                             {isPositive ? '+' : ''}
-                            {m.quantityDelta} {m.uom}
+                            {delta} {m.uom || 'pcs'}
                           </span>
                         </td>
                         <td>
@@ -198,7 +202,15 @@ export default function MoveHistory() {
           {['IN', 'OUT', 'INTERNAL', 'ADJUSTMENT'].map((type) => {
             const cards =
               kanbanData?.columns?.[type] ||
-              moves.filter((m) => (m.direction ? m.direction === type : m.transactionType?.toUpperCase().includes(type)));
+              moves.filter((m) => {
+                const dir = String(m.direction || '').toUpperCase();
+                const op = String(m.operationType || '').toUpperCase();
+                if (type === 'IN') return dir === 'IN' || op.includes('RECEIPT');
+                if (type === 'OUT') return dir === 'OUT' || op.includes('DELIVERY');
+                if (type === 'INTERNAL') return dir === 'INTERNAL' || op.includes('TRANSFER');
+                if (type === 'ADJUSTMENT') return dir === 'ADJUSTMENT' || op.includes('ADJUST');
+                return false;
+              });
             return (
               <div className="kanban-col" key={type} id={`kanban-move-col-${type.toLowerCase()}`}>
                 <div className="kanban-col-header">
@@ -215,32 +227,33 @@ export default function MoveHistory() {
 
                 <div className="kanban-cards-stack">
                   {cards.map((card) => {
-                    const isPositive = card.quantityDelta > 0;
+                    const delta = card.quantityDelta !== undefined ? card.quantityDelta : (card.direction === 'OUT' ? -card.quantity : card.quantity);
+                    const isPositive = delta > 0;
                     return (
-                      <div className="kanban-card" key={card._id}>
+                      <div className="kanban-card" key={card._id || card.id}>
                         <div className="kanban-card-top">
-                          <code className="text-cyan font-bold">{card.referenceNumber}</code>
+                          <code className="text-cyan font-bold">{card.referenceNumber || card.reference}</code>
                           <span
                             className={`font-mono font-bold text-xs ${
-                              isPositive ? 'text-emerald' : card.quantityDelta === 0 ? 'text-indigo' : 'text-rose'
+                              isPositive ? 'text-emerald' : delta === 0 ? 'text-indigo' : 'text-rose'
                             }`}
                           >
                             {isPositive ? '+' : ''}
-                            {card.quantityDelta} {card.uom}
+                            {delta} {card.uom || 'pcs'}
                           </span>
                         </div>
                         <div className="kanban-card-contact">
-                          <b>{card.productName}</b>
-                          <small className="text-muted block">{card.contact || 'Azure Interior'}</small>
+                          <b>{card.productName || card.product}</b>
+                          <small className="text-muted block">{card.contact || 'Internal Logistics'}</small>
                         </div>
                         <div className="kanban-route">
-                          <span>{card.sourceLocation || 'Dock'}</span>
+                          <span>{card.sourceLocation || card.from || 'Dock'}</span>
                           <ArrowRight size={13} className="text-muted" />
-                          <span>{card.destinationLocation || 'Stock'}</span>
+                          <span>{card.destinationLocation || card.to || 'Stock'}</span>
                         </div>
                         <div className="kanban-card-footer">
                           <small className="text-muted">
-                            {card.timestamp ? new Date(card.timestamp).toLocaleDateString() : ''}
+                            {card.date || (card.timestamp ? new Date(card.timestamp).toLocaleDateString() : '')}
                           </small>
                           <span className={`status-pill status-${String(card.status || 'done').toLowerCase()}`}>
                             {card.status || 'Done'}

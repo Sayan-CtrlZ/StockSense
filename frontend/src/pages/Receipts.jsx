@@ -94,14 +94,17 @@ export default function Receipts() {
       if (searchQuery.trim()) params.search = searchQuery.trim();
 
       const res = await api.get('/receipts', { params });
-      const unwrapped = unwrap(res);
+      const rawData = res.data;
+      const list = Array.isArray(rawData?.data)
+        ? rawData.data
+        : Array.isArray(rawData)
+        ? rawData
+        : Array.isArray(unwrap(res))
+        ? unwrap(res)
+        : [];
 
-      if (view === 'kanban') {
-        setKanbanData(unwrapped);
-        setReceipts(unwrapped.data || []);
-      } else {
-        setReceipts(unwrapped || []);
-      }
+      setReceipts(list);
+      setKanbanData(rawData);
     } catch (err) {
       setError(apiError(err));
     } finally {
@@ -333,7 +336,11 @@ export default function Receipts() {
       {view === 'kanban' && (
         <div className="kanban-board" id="receipts-kanban-board">
           {['Draft', 'Waiting', 'Ready', 'Done', 'Canceled'].map((status) => {
-            const cards = kanbanData?.columns?.[status] || receipts.filter((r) => r.status === status);
+            const cards =
+              kanbanData?.columns?.[status] ||
+              receipts.filter(
+                (r) => String(r.status || '').trim().toLowerCase() === status.toLowerCase()
+              );
             return (
               <div className="kanban-col" key={status} id={`kanban-col-${status.toLowerCase()}`}>
                 <div className="kanban-col-header">
@@ -346,13 +353,13 @@ export default function Receipts() {
 
                 <div className="kanban-cards-stack">
                   {cards.map((card) => (
-                    <div className="kanban-card" key={card._id}>
+                    <div className="kanban-card" key={card._id || card.reference}>
                       <div className="kanban-card-top">
-                        <code className="text-cyan font-bold">{card.reference}</code>
-                        <span className={`status-pill status-${card.status.toLowerCase()}`}>{card.status}</span>
+                        <code className="text-cyan font-bold">{card.reference || card.receiptNumber}</code>
+                        <span className={`status-pill status-${String(card.status || '').toLowerCase()}`}>{card.status}</span>
                       </div>
                       <div className="kanban-card-contact">
-                        <b>{card.contact || card.supplierName}</b>
+                        <b>{card.contact || card.supplierName || 'Unknown Vendor'}</b>
                       </div>
                       <div className="kanban-route">
                         <span>{card.from || 'vendor'}</span>
@@ -361,9 +368,11 @@ export default function Receipts() {
                       </div>
                       <div className="kanban-card-footer">
                         <small className="text-muted">
-                          {card.scheduleDate ? new Date(card.scheduleDate).toLocaleDateString() : ''}
+                          {card.scheduleDate || card.scheduledDate
+                            ? new Date(card.scheduleDate || card.scheduledDate).toLocaleDateString()
+                            : ''}
                         </small>
-                        {card.status !== 'Done' && (
+                        {card.status !== 'Done' && card.status !== 'Canceled' && (
                           <button
                             className="btn btn-xs btn-primary"
                             onClick={() => handleValidate(card._id)}
@@ -374,7 +383,7 @@ export default function Receipts() {
                       </div>
                     </div>
                   ))}
-                  {cards.length === 0 && <div className="kanban-empty">No cards</div>}
+                  {cards.length === 0 && <div className="kanban-empty">No receipts</div>}
                 </div>
               </div>
             );

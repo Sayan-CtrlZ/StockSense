@@ -90,14 +90,17 @@ export default function Deliveries() {
       if (searchQuery.trim()) params.search = searchQuery.trim();
 
       const res = await api.get('/deliveries', { params });
-      const unwrapped = unwrap(res);
+      const rawData = res.data;
+      const list = Array.isArray(rawData?.data)
+        ? rawData.data
+        : Array.isArray(rawData)
+        ? rawData
+        : Array.isArray(unwrap(res))
+        ? unwrap(res)
+        : [];
 
-      if (view === 'kanban') {
-        setKanbanData(unwrapped);
-        setDeliveries(unwrapped.data || []);
-      } else {
-        setDeliveries(unwrapped || []);
-      }
+      setDeliveries(list);
+      setKanbanData(rawData);
     } catch (err) {
       setError(apiError(err));
     } finally {
@@ -321,7 +324,11 @@ export default function Deliveries() {
       {view === 'kanban' && (
         <div className="kanban-board" id="deliveries-kanban-board">
           {['Draft', 'Waiting', 'Ready', 'Done', 'Canceled'].map((status) => {
-            const cards = kanbanData?.columns?.[status] || deliveries.filter((r) => r.status === status);
+            const cards =
+              kanbanData?.columns?.[status] ||
+              deliveries.filter(
+                (d) => String(d.status || '').trim().toLowerCase() === status.toLowerCase()
+              );
             return (
               <div className="kanban-col" key={status} id={`kanban-del-col-${status.toLowerCase()}`}>
                 <div className="kanban-col-header">
@@ -334,24 +341,26 @@ export default function Deliveries() {
 
                 <div className="kanban-cards-stack">
                   {cards.map((card) => (
-                    <div className="kanban-card" key={card._id}>
+                    <div className="kanban-card" key={card._id || card.reference}>
                       <div className="kanban-card-top">
-                        <code className="text-cyan font-bold">{card.reference}</code>
-                        <span className={`status-pill status-${card.status.toLowerCase()}`}>{card.status}</span>
+                        <code className="text-cyan font-bold">{card.reference || card.orderNumber}</code>
+                        <span className={`status-pill status-${String(card.status || '').toLowerCase()}`}>{card.status}</span>
                       </div>
                       <div className="kanban-card-contact">
-                        <b>{card.to || card.customerName}</b>
+                        <b>{card.to || card.customerName || 'Customer'}</b>
                       </div>
                       <div className="kanban-route">
                         <code>{card.from || 'WH/Stock1'}</code>
                         <ArrowRight size={13} className="text-muted" />
-                        <span>{card.to || card.customerName}</span>
+                        <span>{card.to || card.customerName || 'Customer'}</span>
                       </div>
                       <div className="kanban-card-footer">
                         <small className="text-muted">
-                          {card.scheduleDate ? new Date(card.scheduleDate).toLocaleDateString() : ''}
+                          {card.scheduleDate || card.scheduledDate
+                            ? new Date(card.scheduleDate || card.scheduledDate).toLocaleDateString()
+                            : ''}
                         </small>
-                        {card.status !== 'Done' && (
+                        {card.status !== 'Done' && card.status !== 'Canceled' && (
                           <button
                             className="btn btn-xs btn-primary"
                             onClick={() => handleValidate(card._id)}

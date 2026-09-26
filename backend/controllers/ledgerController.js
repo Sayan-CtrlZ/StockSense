@@ -161,7 +161,23 @@ const getMoveHistory = asyncHandler(async (req, res) => {
     }
   });
 
-  // 2. Sort all moves by date descending
+  // 2. Sort all moves by date descending and enrich with field aliases
+  moves.forEach((m) => {
+    m._id = m._id || m.id;
+    m.referenceNumber = m.referenceNumber || m.reference;
+    m.productName = m.productName || m.product;
+    m.timestamp = m.timestamp || m.rawDate;
+    if (m.quantityDelta === undefined) {
+      m.quantityDelta = m.direction === 'OUT' ? -m.quantity : m.quantity;
+    }
+    const fromParts = String(m.from || '').split('/');
+    m.sourceWarehouse = m.sourceWarehouse || fromParts[0] || 'vendor';
+    m.sourceLocation = m.sourceLocation || fromParts[1] || fromParts[0] || 'vendor';
+    const toParts = String(m.to || '').split('/');
+    m.destinationWarehouse = m.destinationWarehouse || toParts[0] || 'WH';
+    m.destinationLocation = m.destinationLocation || toParts[1] || toParts[0] || 'Stock1';
+  });
+
   moves.sort((a, b) => new Date(b.rawDate) - new Date(a.rawDate));
 
   // 3. Filter moves based on query params
@@ -202,7 +218,7 @@ const getMoveHistory = asyncHandler(async (req, res) => {
     );
   }
 
-  // 4. If Kanban view requested, group by Status: Draft, Waiting, Ready, Done
+  // 4. If Kanban view requested, return direction groups & status groups
   if (view.toLowerCase() === 'kanban') {
     const kanbanGroups = {
       Draft: [],
@@ -210,17 +226,37 @@ const getMoveHistory = asyncHandler(async (req, res) => {
       Ready: [],
       Done: [],
     };
+    const directionGroups = {
+      IN: [],
+      OUT: [],
+      INTERNAL: [],
+      ADJUSTMENT: [],
+    };
 
     filteredMoves.forEach((move) => {
       const col = kanbanGroups[move.status] ? move.status : 'Done';
       kanbanGroups[col].push(move);
+
+      const dir = (move.direction || '').toUpperCase();
+      const op = (move.operationType || '').toUpperCase();
+      if (dir === 'IN' || op.includes('RECEIPT')) {
+        directionGroups.IN.push(move);
+      } else if (dir === 'OUT' || op.includes('DELIVERY')) {
+        directionGroups.OUT.push(move);
+      } else if (dir === 'INTERNAL' || op.includes('TRANSFER')) {
+        directionGroups.INTERNAL.push(move);
+      } else {
+        directionGroups.ADJUSTMENT.push(move);
+      }
     });
 
     return res.status(200).json({
       success: true,
       view: 'kanban',
       totalMoves: filteredMoves.length,
-      data: kanbanGroups,
+      columns: directionGroups,
+      statusColumns: kanbanGroups,
+      data: filteredMoves,
     });
   }
 
