@@ -104,12 +104,17 @@ const signup = asyncHandler(async (req, res) => {
 
   const name = rawName && rawName.trim() ? rawName.trim() : loginId;
 
+  const allowedRoles = ['inventory_manager', 'warehouse_staff'];
+  const assignedRole = req.body.role && allowedRoles.includes(req.body.role)
+    ? req.body.role
+    : 'warehouse_staff';
+
   const user = await User.create({
     loginId: loginId.toLowerCase(),
     name,
     email: email.toLowerCase(),
     password,
-    role: req.body.role || 'inventory_manager',
+    role: assignedRole,
   });
 
   const token = generateAuthToken(user._id);

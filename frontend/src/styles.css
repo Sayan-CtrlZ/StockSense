@@ -1539,6 +1539,108 @@ a {
   box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
 }
 
+/* Role Selector on Auth Pages */
+.auth-role-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  background: var(--bg-hover);
+  padding: 6px;
+  border-radius: 10px;
+  border: 1px solid var(--border-accent);
+  margin-bottom: 20px;
+}
+
+.auth-role-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.auth-role-btn:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.auth-role-btn.active {
+  background: #ffffff;
+  color: var(--primary);
+  border-color: var(--border-accent);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.auth-role-btn-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.auth-role-btn-desc {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.auth-role-btn.active .auth-role-btn-desc {
+  color: var(--primary);
+  opacity: 0.85;
+}
+
+.auth-role-hint-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(37, 99, 235, 0.05);
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 18px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.auth-role-hint-card strong {
+  color: var(--primary);
+}
+
+.auth-role-hint-card code {
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-weight: 600;
+}
+
+.auth-quick-autofill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  color: var(--primary);
+  font-weight: 600;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  text-decoration: underline;
+  font-size: 12px;
+}
+
 .auth-view-header {
   margin-bottom: 24px;
   text-align: center;

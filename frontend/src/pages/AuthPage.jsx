@@ -16,11 +16,13 @@ export default function AuthPage({ onLoginSuccess }) {
   // Modes: 'login', 'signup', 'forgot', 'verify-otp', 'reset-password'
   const [mode, setMode] = useState('login');
 
-  // Login form state (pre-filled for manager)
+  // Role selection state for login ('inventory_manager' | 'warehouse_staff')
+  const [loginRole, setLoginRole] = useState('inventory_manager');
   const [loginId, setLoginId] = useState('manager');
   const [loginPassword, setLoginPassword] = useState('Password123!');
 
-  // Sign up form state
+  // Role selection state for sign up ('warehouse_staff' | 'inventory_manager')
+  const [signupRole, setSignupRole] = useState('warehouse_staff');
   const [signupLoginId, setSignupLoginId] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
@@ -106,6 +108,7 @@ export default function AuthPage({ onLoginSuccess }) {
         email: signupEmail.trim(),
         password: signupPassword,
         reEnterPassword: signupRePassword,
+        role: signupRole,
       });
       const data = unwrap(res);
       if (data?.token) {
@@ -211,6 +214,76 @@ export default function AuthPage({ onLoginSuccess }) {
               <p className="auth-desc">Sign in with your Login Id or registered Email.</p>
             </div>
 
+            {/* Role Selection Tabs for Login */}
+            <div className="auth-role-selector" id="login-role-selector">
+              <button
+                type="button"
+                id="login-role-manager"
+                className={`auth-role-btn ${loginRole === 'inventory_manager' ? 'active' : ''}`}
+                onClick={() => {
+                  setLoginRole('inventory_manager');
+                  setLoginId('manager');
+                  setLoginPassword('Password123!');
+                  setErrorMessage('');
+                }}
+              >
+                <span className="auth-role-btn-title">
+                  <ShieldCheck size={16} /> Manager
+                </span>
+                <span className="auth-role-btn-desc">Admin & Full Access</span>
+              </button>
+
+              <button
+                type="button"
+                id="login-role-staff"
+                className={`auth-role-btn ${loginRole === 'warehouse_staff' ? 'active' : ''}`}
+                onClick={() => {
+                  setLoginRole('warehouse_staff');
+                  setLoginId('staffuser');
+                  setLoginPassword('Password123!');
+                  setErrorMessage('');
+                }}
+              >
+                <span className="auth-role-btn-title">
+                  <User size={16} /> Staff
+                </span>
+                <span className="auth-role-btn-desc">Warehouse Operations</span>
+              </button>
+            </div>
+
+            {/* Credentials Info & Autofill Hint */}
+            {loginRole === 'inventory_manager' ? (
+              <div className="auth-role-hint-card" id="hint-manager-creds">
+                <ShieldCheck size={18} className="text-primary mt-0.5 shrink-0" />
+                <div>
+                  <div><strong>Manager Account:</strong> Hardcoded administrative credentials.</div>
+                  <div style={{ marginTop: '2px' }}>
+                    ID: <code>manager</code> | Pass: <code>Password123!</code>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="auth-role-hint-card" id="hint-staff-creds">
+                <User size={18} className="text-primary mt-0.5 shrink-0" />
+                <div>
+                  <div><strong>Staff Account:</strong> Operational access to Receipts, Deliveries & Moves.</div>
+                  <div style={{ marginTop: '2px' }}>
+                    Demo ID: <code>staffuser</code> | Pass: <code>Password123!</code>
+                  </div>
+                  <button
+                    type="button"
+                    className="auth-quick-autofill"
+                    onClick={() => {
+                      setLoginId('');
+                      setLoginPassword('');
+                    }}
+                  >
+                    Clear to enter your personal credentials
+                  </button>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleLoginSubmit} className="auth-form" id="login-form">
               <div className="auth-input-group">
                 <label htmlFor="login-id-input">Login Id</label>
@@ -293,6 +366,36 @@ export default function AuthPage({ onLoginSuccess }) {
             </div>
 
             <form onSubmit={handleSignupSubmit} className="auth-form" id="signup-form">
+              {/* Role Selection on Sign Up */}
+              <div className="auth-input-group">
+                <label>Select Role</label>
+                <div className="auth-role-selector" id="signup-role-selector">
+                  <button
+                    type="button"
+                    id="signup-role-staff"
+                    className={`auth-role-btn ${signupRole === 'warehouse_staff' ? 'active' : ''}`}
+                    onClick={() => setSignupRole('warehouse_staff')}
+                  >
+                    <span className="auth-role-btn-title">
+                      <User size={16} /> Warehouse Staff
+                    </span>
+                    <span className="auth-role-btn-desc">Standard Warehouse User</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    id="signup-role-manager"
+                    className={`auth-role-btn ${signupRole === 'inventory_manager' ? 'active' : ''}`}
+                    onClick={() => setSignupRole('inventory_manager')}
+                  >
+                    <span className="auth-role-btn-title">
+                      <ShieldCheck size={16} /> Inventory Manager
+                    </span>
+                    <span className="auth-role-btn-desc">Warehouse & Settings Admin</span>
+                  </button>
+                </div>
+              </div>
+
               {/* Field 1: Enter Login Id */}
               <div className="auth-input-group">
                 <label htmlFor="signup-login-id">Enter Login Id</label>
